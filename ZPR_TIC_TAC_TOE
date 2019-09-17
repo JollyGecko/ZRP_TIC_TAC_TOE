@@ -2,7 +2,7 @@ EPORT ZPR_TIC_TAC_TOE.
 
 Include ZPR_TIC_TAC_TOE_TOP.
 Include ZPR_TIC_TAC_TOE_SCR.
-Include ZPR_TIC_TAC_TOE_CLS. "This is only needed if you don't create your class with SE24
+*Include ZPR_TIC_TAC_TOE_CLS. "This is only needed if you don't create your class with SE24
 include ZPR_TIC_TAC_TOE_F01.
 
 initialization.
