@@ -1,0 +1,11 @@
+"Screen table
+tables: sscrfields.
+
+"Objects
+data: go_galo type ref to zcl_tic_tac_toe.
+
+"variables
+data: victory           type boolean,
+      begin             type boolean,
+      it                type i,
+      f_id              type string.
