@@ -9,6 +9,6 @@ Instructions:
 2.1 If you don't want to use SE24 to create the class, add an Include ZPR_TIC_TAC_TOE_CLS;
 3. Copy the code to the respective place;
 3.1 For the class:
-    the file ZCL_TIC_TAC_TOE Header contains the Definition
-    the file ZPR_TIC_TAC_TOE Implementation contains the implementation;
+    the file ZCL_TIC_TAC_TOE Definition contains the Definition
+    the file ZCL_TIC_TAC_TOE Implementation contains the implementation;
 4. Compile, play and have fun
