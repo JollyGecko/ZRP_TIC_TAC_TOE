@@ -1,0 +1,30 @@
+SELECTION-SCREEN BEGIN OF BLOCK bl_02 WITH FRAME TITLE text-002.
+  SELECTION-SCREEN SKIP 1.
+  selection-screen:
+  begin of line,
+    pushbutton 39(10) ng user-command NG,
+    pushbutton 52(10) lv user-command LV,
+  end of line.
+SELECTION-SCREEN END OF BLOCK bl_02.
+
+SELECTION-SCREEN BEGIN OF BLOCK bl_01 WITH FRAME TITLE text-001.
+SELECTION-SCREEN SKIP 1.
+
+selection-screen:
+begin of line,
+  pushbutton 42(5) pos11 user-command G11 modif id G11,
+  pushbutton 48(5) pos12 user-command G12 modif id G12,
+  pushbutton 54(5) pos13 user-command G13 modif id G13,
+end of line,
+BEGIN OF LINE,
+  PUSHBUTTON 42(5) pos21 USER-COMMAND G21 MODIF ID G21,
+  PUSHBUTTON 48(5) pos22 USER-COMMAND G22 MODIF ID G22,
+  PUSHBUTTON 54(5) pos23 USER-COMMAND G23 MODIF ID G23,
+END OF LINE,
+BEGIN OF LINE,
+  PUSHBUTTON 42(5) pos31 USER-COMMAND G31 MODIF ID G31,
+  PUSHBUTTON 48(5) pos32 USER-COMMAND G32 MODIF ID G32,
+  PUSHBUTTON 54(5) pos33 USER-COMMAND G33 MODIF ID G33,
+END OF LINE.
+
+SELECTION-SCREEN END OF BLOCK bl_01.
