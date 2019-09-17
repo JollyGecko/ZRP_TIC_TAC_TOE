@@ -1,0 +1,14 @@
+form disable_button using ch.
+  loop at screen.
+    if screen-group1 = ch.
+      screen-input = 'X'.
+      modify screen.
+      exit.
+    endif.
+  endloop.
+endform.
+
+form restart.
+  clear: pos11, pos12, pos13, pos21, pos22, pos23, pos31, pos32, pos33.
+  victory = abap_false.
+endform.
