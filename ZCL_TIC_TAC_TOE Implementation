@@ -1,0 +1,671 @@
+CLASS ZCL_TIC_TAC_TOE IMPLEMENTATION.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->CHANGE_O_VICTORIES
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] I_CHANGE                       TYPE        C
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method change_O_victories.
+    if i_change = 'W' or i_change = 'w'.
+      n_vics_O = n_vics_O + 1.
+    endif.
+    if i_change = 'L' or i_change = 'l'.
+      n_vics_O = n_vics_O - 1.
+    endif.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->CHECK_COLUMNS
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] I_BOARD                        TYPE        T_BOARD
+* | [--->] ATTACK                         TYPE        BOOLEAN(optional)
+* | [<-->] C_POS                          TYPE        STRING
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method check_columns.
+    data: trans_board type t_board,
+          local_pos   type string.
+
+    me->transpose_board( changing c_board = trans_board ).
+
+    if attack is not supplied.
+      me->check_lines( exporting i_board = trans_board changing c_pos = local_pos ).
+    else.
+      me->check_lines( exporting i_board = trans_board attack = attack changing c_pos = local_pos ).
+    endif.
+
+    if local_pos is not initial.
+      concatenate local_pos(1) local_pos+2(1) local_pos+1(1) into c_pos.
+      condense c_pos no-gaps.
+    endif.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->CHECK_DETERM_DIAG
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] ATTACK                         TYPE        BOOLEAN(optional)
+* | [<-->] C_POS                          TYPE        STRING
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method check_determ_diag.
+    data: char type c length 1,
+          cond type string.
+
+    if attack is not supplied.
+      char = space.
+    else.
+      if attack = abap_false.
+        char = last_char.
+      else.
+        char = next_char.
+      endif.
+    endif.
+
+    if ( board-g21 = board-g12 and board-g21 = char ) or
+       ( board-g21 = board-g13 and board-g21 = char ) or
+       ( board-g12 = board-g31 and board-g12 = char ).
+      if board-g11 is initial.
+        c_pos = 'G11'.
+      endif.
+    endif.
+
+    if ( board-g12 = board-g23 and board-g23 = char ) or
+       ( board-g11 = board-g23 and board-g23 = char ) or
+       ( board-g12 = board-g33 and board-g12 = char ).
+      if board-g13 is initial.
+        c_pos = 'G13'.
+      endif.
+    endif.
+
+    if ( board-g21 = board-g32 and board-g21 = char ) or
+       ( board-g21 = board-g33 and board-g21 = char ) or
+       ( board-g11 = board-g32 and board-g32 = char ).
+      if board-g31 is initial.
+        c_pos = 'G31'.
+      endif.
+    endif.
+
+    if ( board-g32 = board-g23 and board-g32 = char ) or
+       ( board-g32 = board-g13 and board-g32 = char ) or
+       ( board-g31 = board-g23 and board-g23 = char ).
+      if board-g33 is initial.
+        c_pos = 'G33'.
+      endif.
+    endif.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->CHECK_DIAGONALS
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] ATTACK                         TYPE        BOOLEAN(optional)
+* | [<-->] C_POS                          TYPE        STRING
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method check_diagonals.
+    data: char        type c length 1,
+          center_char type c length 1.
+
+    if attack is not supplied.
+      char = space.
+    else.
+      if attack = abap_false.
+        char = last_char.
+      else.
+        char = next_char.
+      endif.
+    endif.
+
+    center_char = board-G22.
+
+    if char = center_char.
+      if board-G11 = char.
+        if board-g33 is initial.
+          c_pos = 'G33'.
+          return.
+        endif.
+      endif.
+
+      if board-G13 = char.
+        if board-g31 is initial.
+          c_pos = 'G31'.
+          return.
+        endif.
+      endif.
+
+      if board-G31 = char.
+        if board-g13 is initial.
+          c_pos = 'G13'.
+          return.
+        endif.
+      endif.
+
+      if board-G33 = char.
+        if board-g11 is initial.
+          c_pos = 'G11'.
+          return.
+        endif.
+      endif.
+    endif.
+
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->CHECK_LINES
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] I_BOARD                        TYPE        T_BOARD
+* | [--->] ATTACK                         TYPE        BOOLEAN(optional)
+* | [<-->] C_POS                          TYPE        STRING
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method check_lines.
+    data: it    type i,
+          pla   type i,
+          char  type c length 1,
+          aux_i type string.
+    field-SYMBOLS: <fs1> type any,
+                   <fs2> type any,
+                   <fs3> type any.
+
+    if attack is not supplied.
+      char = space.
+    else.
+      if attack = abap_false.
+        char = last_char.
+      else.
+        char = next_char.
+      endif.
+    endif.
+
+    pla = -2.
+    it = 0.
+    do n_square times.
+      pla = pla + 3.
+      it = it + 1.
+      assign component pla of structure i_board to <fs1>.
+      assign component ( pla + 1 ) of structure i_board to <fs2>.
+      assign component ( pla + 2 ) of structure i_board to <fs3>.
+
+      if <fs1> = <fs2> and <fs1> = char.
+        if <fs3> is initial.
+          aux_i = conv turn( it ).
+          c_pos = 'G' && conv turn( it ) && '3'.
+          condense c_pos no-gaps.
+          return.
+        endif.
+      endif.
+
+      if <fs1> = <fs3> and <fs1> = char.
+        if <fs2> is initial.
+          aux_i = conv turn( it ).
+          c_pos = 'G' && conv turn( it ) && '2'.
+          condense c_pos no-gaps.
+          return.
+        endif.
+      endif.
+
+      if <fs2> = <fs3> and <fs2> = char.
+        if <fs1> is initial.
+          aux_i = conv turn( it ).
+          c_pos = 'G' && conv turn( it ) && '1'.
+          condense c_pos no-gaps.
+          return.
+        endif.
+      endif.
+    enddo.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->CHECK_VICTORY
+* +-------------------------------------------------------------------------------------------------+
+* | [<-()] RES                            TYPE        BOOLEAN
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method check_victory.
+    data: vict        type boolean,
+          trans_board type t_board.
+
+    vict = abap_false.
+    vict = me->row_victory( exporting i_board = board ).
+    if vict = abap_true.
+      res = vict.
+      return.
+    else.
+      me->transpose_board( changing c_board = trans_board ).
+      vict = me->row_victory( exporting i_board = trans_board ).
+      if vict = abap_true.
+        res = vict.
+        return.
+      else.
+        vict = me->diagonal_victory( ).
+        res = vict.
+      endif.
+    endif.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->CONSTRUCTOR
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method CONSTRUCTOR.
+    n_square = 3.
+    num_games = 0.
+    play_count = 0.
+    clear: next_char, winner_char.
+    me->initialize_board( ).
+    me->set_chars( ).
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->DEF_TXTS
+* +-------------------------------------------------------------------------------------------------+
+* | [<-->] C_TXT1                         TYPE        STRING
+* | [<-->] C_TXT2                         TYPE        STRING
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method def_txts.
+    case n_vics_O.
+      when 0 or 1 or 2.
+        c_txt1 = 'The computer won'.
+        c_txt2 = 'You suck'.
+      when 3.
+        c_txt1 = 'You lose again'.
+        c_txt2 = 'Are you sure you know the rules?'.
+      when 4.
+        c_txt1 = 'Wow you really like this, don''t you?'.
+        c_txt2 = 'Keep trying!'.
+      when 5.
+        c_txt1 = 'Have you tried playing well?'.
+        c_txt2 = 'It might work'.
+      when 6.
+        c_txt1 = 'Oh c''mon...'.
+        c_txt2 = 'This is starting to hurt a little...'.
+      when 7 or 8.
+        c_txt1 = 'Ok, I''ll close one eye.'.
+        c_txt2 = 'Deal?'.
+      when 9 or 10.
+        c_txt1 = 'Have you tried fishing?'.
+        c_txt2 = 'You might like it'.
+      when others.
+        c_txt1 = 'Just give up.... Please....'.
+        c_txt2 = 'It''s embarrassing'.
+    endcase.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->DIAGONAL_VICTORY
+* +-------------------------------------------------------------------------------------------------+
+* | [<-()] RES                            TYPE        BOOLEAN
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method diagonal_victory.
+    res = abap_false.
+    if board-G11 = board-g22 and board-G22 = board-G33.
+      res = abap_true.
+      winner_char = board-G22.
+      return.
+    endif.
+    if board-G13 = board-g22 and board-G22 = board-G31.
+      res = abap_true.
+      winner_char = board-G22.
+      return.
+    endif.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->DO_CHAR_ID
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] I_CHAR                         TYPE        STRING
+* | [--->] I_POS                          TYPE        STRING
+* | [<-()] RES                            TYPE        STRING
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method do_char_id.
+    concatenate i_char i_pos into res.
+    condense res no-gaps.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->FILL_POSITION
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] I_POS                          TYPE        STRING
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method fill_position.
+    field-SYMBOLS: <fs> type c.
+    assign component i_pos of structure board to <fs>.
+    <fs> = next_char.
+    play_count = play_count + 1.
+    me->set_chars( ).
+    append i_pos to used_tab.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->INITIALIZE_BOARD
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method initialize_board.
+    clear: board-G11, board-G12, board-G13, board-G21, board-G22.
+    clear: board-G23, board-G31, board-G32, board-G33.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->PC_MOVE
+* +-------------------------------------------------------------------------------------------------+
+* | [<-()] RES                            TYPE        STRING
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method pc_move.
+    data: local_pos type string.
+
+    case play_count.
+      when 0 or 1.
+        me->pc_move_1( changing c_pos = local_pos ).
+        res = local_pos.
+      when 2 or 3.
+        me->PC_MOVE_2( exporting attack = abap_false changing c_pos = local_pos ).
+        if local_pos is initial." jogada a diagonal principal.
+          me->check_determ_diag( exporting attack = abap_false changing c_pos = local_pos ).
+          if local_pos is initial.
+            me->smart_move( changing c_pos = local_pos ).
+          endif.
+        endif.
+        res = local_pos.
+      when 4 or 5.
+        me->PC_MOVE_3( changing c_pos = local_pos ).
+        if local_pos is initial.
+          me->check_determ_diag( exporting attack = abap_true changing c_pos = local_pos ).
+          if local_pos is initial.
+            me->smart_move( changing c_pos = local_pos ).
+          endif.
+        endif.
+        res = local_pos.
+      when 6 or 7.
+        me->PC_MOVE_3( changing c_pos = local_pos ).
+        if local_pos is initial.
+          me->smart_move( changing c_pos = local_pos ).
+        endif.
+        res = local_pos.
+      when 8 or 9.
+        exit.
+    endcase.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->PC_MOVE_1
+* +-------------------------------------------------------------------------------------------------+
+* | [<-->] C_POS                          TYPE        STRING
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method pc_move_1.
+    if board-G22 is initial.
+      c_pos = 'G22'.
+      return.
+    endif.
+    if board-G33 is initial.
+      c_pos = 'G33'.
+      return.
+    endif.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->PC_MOVE_2
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] ATTACK                         TYPE        BOOLEAN
+* | [<-->] C_POS                          TYPE        STRING
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method pc_move_2.
+    data: local_pos    type string.
+
+    clear: local_pos.
+    me->check_lines( exporting i_board = board attack = attack changing c_pos = local_pos ).
+    if local_pos is not initial.
+      c_pos = local_pos.
+      return.
+    endif.
+
+    me->check_columns( exporting i_board = board attack = attack changing c_pos = local_pos ).
+    if local_pos is not initial.
+      c_pos = local_pos.
+      return.
+    endif.
+
+    me->check_diagonals( exporting attack = attack changing c_pos = local_pos ).
+    if local_pos is not initial.
+      c_pos = local_pos.
+      return.
+    endif.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->PC_MOVE_2_1
+* +-------------------------------------------------------------------------------------------------+
+* | [<-->] C_POS                          TYPE        STRING
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method pc_move_2_1.
+    data: local_pos type string.
+
+    clear: local_pos.
+    me->check_lines( exporting i_board = board changing c_pos = local_pos ).
+    if local_pos is not initial.
+      c_pos = local_pos.
+      return.
+    endif.
+
+    me->check_columns( exporting i_board = board changing c_pos = local_pos ).
+    if local_pos is not initial.
+      c_pos = local_pos.
+      return.
+    endif.
+
+    me->check_diagonals( changing c_pos = local_pos ).
+    if local_pos is not initial.
+      c_pos = local_pos.
+      return.
+    endif.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->PC_MOVE_3
+* +-------------------------------------------------------------------------------------------------+
+* | [<-->] C_POS                          TYPE        STRING
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method pc_move_3.
+    data: local_pos type string.
+    me->pc_move_2( exporting attack = abap_true changing c_pos = local_pos ).
+    if local_pos is not initial.
+      c_pos = local_pos.
+      return.
+    endif.
+
+    me->pc_move_2( exporting attack = abap_false changing c_pos = local_pos ).
+    if local_pos is not initial.
+      c_pos = local_pos.
+      return.
+    endif.
+
+    me->PC_MOVE_2_1( changing c_pos = local_pos ). "Creates oportunity
+    if local_pos is not initial.
+      c_pos = local_pos.
+      return.
+    endif.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->RESTART
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method restart.
+    play_count = 0.
+    clear: next_char, winner_char.
+    "num_games = num_games + 1.
+    clear: used_tab, board.
+    me->initialize_board( ).
+    me->set_chars( ).
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->RET_NEXT_CHAR
+* +-------------------------------------------------------------------------------------------------+
+* | [<-()] RES                            TYPE        STRING
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method ret_next_char.
+    res = next_char.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->RET_PLAY_COUNT
+* +-------------------------------------------------------------------------------------------------+
+* | [<-()] RES                            TYPE        I
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method ret_play_count.
+    res = play_count.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->RET_WINNER_CHAR
+* +-------------------------------------------------------------------------------------------------+
+* | [<-()] RES                            TYPE        STRING
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method ret_winner_char.
+    res = winner_char.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->ROW_VICTORY
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] I_BOARD                        TYPE        T_BOARD
+* | [<-()] RES                            TYPE        BOOLEAN
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method row_victory.
+    data: it  type i,
+          pla type i.
+    field-SYMBOLS: <fs1> type any,
+                   <fs2> type any,
+                   <fs3> type any.
+
+    pla = -2.
+    it = 0.
+    res = abap_false.
+    do n_square times.
+      pla = pla + 3.
+      it = it + 1.
+      assign component pla of structure i_board to <fs1>.
+      assign component ( pla + 1 ) of structure i_board to <fs2>.
+      assign component ( pla + 2 ) of structure i_board to <fs3>.
+
+      if <fs1> = <fs2> and <fs1> = <fs3>.
+        winner_char = <fs1>.
+        res = abap_true.
+      endif.
+    enddo.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->SET_CHARS
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method set_chars.
+    if ( ( play_count + num_games ) mod 2 ) = 0.
+      next_char = 'X'.
+      last_char = 'O'.
+    else.
+      next_char = 'O'.
+      last_char = 'X'.
+    endif.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->SMART_MOVE
+* +-------------------------------------------------------------------------------------------------+
+* | [<-->] C_POS                          TYPE        STRING
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method smart_move.
+    if board-g11 = last_char and board-g22 = last_char.
+      if board-g33 = next_char.
+        if board-g13 is initial.
+          c_pos = 'G13'.
+          return.
+        elseif board-g31 is initial.
+          c_pos = 'G31'.
+          return.
+        endif.
+      endif.
+    endif.
+    if board-g12 is initial.
+      c_pos = 'G12'.
+    elseif board-g23 is initial.
+      c_pos = 'G23'.
+    elseif board-g33 is initial.
+      c_pos = 'G33'.
+    elseif board-g32 is initial.
+      c_pos = 'G32'.
+    endif.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->TRANSPOSE_BOARD
+* +-------------------------------------------------------------------------------------------------+
+* | [<-->] C_BOARD                        TYPE        T_BOARD
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method transpose_board.
+    c_board-G11 = board-G11.
+    c_board-G12 = board-G21.
+    c_board-G13 = board-G31.
+
+    c_board-G21 = board-G12.
+    c_board-G22 = board-G22.
+    c_board-G23 = board-G32.
+
+    c_board-G31 = board-G13.
+    c_board-G32 = board-G23.
+    c_board-G33 = board-G33.
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_TIC_TAC_TOE->WINNER_MSG
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] I_GAMES                        TYPE        I(optional)
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method winner_msg.
+    data: txt1 type string,
+          txt2 type string.
+
+    if winner_char = 'X'.
+      CALL FUNCTION 'POPUP_TO_INFORM'
+        EXPORTING
+          titel  = 'You Win'
+          txt1   = ' There must be some kind of mistake'
+          txt2   = ' Stop bugging my code. '
+        EXCEPTIONS
+          OTHERS = 1.
+      return.
+    endif.
+
+    if winner_char = 'O'.
+      me->def_txts( changing c_txt1 = txt1 c_txt2 = txt2 ).
+      CALL FUNCTION 'POPUP_TO_INFORM'
+        EXPORTING
+          titel  = 'Computer Wins'
+          txt1   = txt1
+          txt2   = txt2
+        EXCEPTIONS
+          OTHERS = 1.
+      return.
+    endif.
+  endmethod.
+ENDCLASS.
