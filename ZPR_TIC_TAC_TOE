@@ -1,0 +1,78 @@
+EPORT ZPR_TIC_TAC_TOE.
+
+Include ZPR_TIC_TAC_TOE_TOP.
+Include ZPR_TIC_TAC_TOE_SCR.
+Include ZPR_TIC_TAC_TOE_CLS. "This is only needed if you don't create your class with SE24
+include ZPR_TIC_TAC_TOE_F01.
+
+initialization.
+  create object go_galo.
+  perform restart.
+  ng = 'New Game'.
+  lv = 'Leave Game'.
+
+at selection-screen output.
+  if begin = abap_true.
+    perform restart.
+    go_galo->restart( ).
+  else.
+    loop at go_galo->used_tab into f_id.
+      perform BOX_DISABLE using f_id.
+    endloop.
+    if go_galo->ret_play_count( ) >= 5.
+      victory = go_galo->check_victory( ).
+      if victory = abap_true.
+        if go_galo->ret_winner_char( ) = 'O'.
+          go_galo->change_O_victories( 'W' ).
+        endif.
+        go_galo->winner_msg( ).
+      endif.
+    endif.
+  endif.
+
+at SELECTION-SCREEN.
+  it = 1.
+  if victory = abap_true.
+    begin = abap_true.
+  else.
+    begin = abap_false.
+    do 2 times.
+      case sscrfields.
+        when 'NG'.
+          begin = abap_true.
+          stop.
+        when 'LV'.
+          leave program.
+        when 'G11'.
+          pos11 = go_galo->ret_next_char( ).
+        when 'G12'.
+          pos12 = go_galo->ret_next_char( ).
+        when 'G13'.
+          pos13 = go_galo->ret_next_char( ).
+        when 'G21'.
+          pos21 = go_galo->ret_next_char( ).
+        when 'G22'.
+          pos22 = go_galo->ret_next_char( ).
+        when 'G23'.
+          pos23 = go_galo->ret_next_char( ).
+        when 'G31'.
+          pos31 = go_galo->ret_next_char( ).
+        when 'G32'.
+          pos32 = go_galo->ret_next_char( ).
+        when 'G33'.
+          pos33 = go_galo->ret_next_char( ).
+      endcase.
+
+      go_galo->FILL_POSITION( i_pos = conv string( sscrfields ) ).
+      if it = 1.
+        clear: sscrfields.
+        sscrfields = go_galo->pc_move( ).
+        if sscrfields is initial.
+          exit.
+        endif.
+      endif.
+      it = it + 1.
+    enddo.
+  endif.
+
+start-OF-SELECTION.
