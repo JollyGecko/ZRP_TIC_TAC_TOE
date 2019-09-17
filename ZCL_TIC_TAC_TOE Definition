@@ -1,0 +1,92 @@
+class ZCL_TIC_TAC_TOE definition
+  public
+  create public .
+
+  public section.
+    types: turn type string.
+    types: begin of t_board,
+             G11 type c length 1,
+             G12 type c length 1,
+             G13 type c length 1,
+             G21 type c length 1,
+             G22 type c length 1,
+             G23 type c length 1,
+             G31 type c length 1,
+             G32 type c length 1,
+             G33 type c length 1,
+           end of t_board.
+
+    class-data: num_games   type i.
+    data: board    type t_board,
+          used_tab type table of string.
+
+    methods CONSTRUCTOR .
+    methods restart.
+    methods initialize_board.
+    methods set_chars.
+    methods do_char_id
+      importing i_char     type string
+                i_pos      type string
+      returning value(res) type string.
+    methods fill_position
+      importing i_pos type string.
+    methods ret_next_char
+      returning value(res) type string.
+    methods pc_move
+      returning value(res) type string.
+    methods pc_move_1
+      changing c_pos type string.
+    methods pc_move_2
+      importing attack type boolean
+      changing  c_pos  type string.
+    methods pc_move_2_1
+      changing c_pos type string.
+    methods pc_move_3
+      changing c_pos type string.
+    methods smart_move
+      changing c_pos type string.
+    methods check_lines
+      importing i_board type t_board
+                attack  type boolean optional
+      changing  c_pos   type string.
+    methods check_columns
+      importing i_board type t_board
+                attack  type boolean optional
+      changing  c_pos   type string.
+    methods check_diagonals
+      importing attack type boolean optional
+      changing  c_pos  type string.
+    methods check_determ_diag
+      importing attack type boolean optional
+      changing  c_pos  type string.
+    methods transpose_board
+      changing c_board type t_board.
+    methods ret_play_count
+      returning value(res) type i.
+    methods ret_winner_char
+      returning value(res) type string.
+    methods check_victory
+      returning value(res) type boolean.
+    methods row_victory
+      importing i_board    type t_board
+      returning value(res) type boolean.
+    methods diagonal_victory
+      returning value(res) type boolean.
+    methods winner_msg.
+    methods def_txts
+      changing c_txt1 type string
+               c_txt2 type string.
+    methods change_O_victories
+      importing i_change type c.
+
+  protected section.
+  private section.
+
+    data: n_square    type i,
+          play_count  type i,
+          n_vics_O    type i,
+          last_char   type c length 1,
+          next_char   type c length 1,
+          winner_char type c length 1.
+
+ENDCLASS.
