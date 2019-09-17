@@ -17,7 +17,7 @@ at selection-screen output.
     go_galo->restart( ).
   else.
     loop at go_galo->used_tab into f_id.
-      perform BOX_DISABLE using f_id.
+      perform disable_button using f_id.
     endloop.
     if go_galo->ret_play_count( ) >= 5.
       victory = go_galo->check_victory( ).
